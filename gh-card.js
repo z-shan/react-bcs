@@ -4,7 +4,7 @@ const Card = (props) => {
     	<img width="75" src={props.avatar_url} />
       <div style={{display: 'inline-block', marginLeft: 10}}>
       	<div style={{fontSize: '1.25em', fontWeight: 'bold'}}>
-        	{props.name}
+        	{props.login}
         </div>
         <div>{props.company}</div>
     	</div>
@@ -12,31 +12,34 @@ const Card = (props) => {
   );
 };
 
-let data = [
-	{
-  	name : "mojombo",
-    avatar_url :"https://avatars3.githubusercontent.com/u/1?v=3",
-    company :"Facebook"
-  },
-  {
-  	name : "defunct",
-    avatar_url :"https://avatars3.githubusercontent.com/u/2?v=3",
-    company :"Facebook"
-  }
-]
 const CardList = (props) => {
 	return (
   	<div>
-    	{props.cards.map(card => <Card {...card} />)}
+    	{props.cards.map(card => <Card key={card.id} {...card} />)}
     </div>
   );
 };
 
 class Form extends React.Component {
-	render() {
+	state = {userName : ''}
+  
+  handleSubmit = (event) => {
+  	event.preventDefault();
+    //console.log(this.state.userName);
+    axios.get(`https://api.github.com/users/${this.state.userName}`)
+    	.then(resp => {
+      	this.props.onSubmit(resp.data);
+        this.setState({userName: ''});
+      })
+  }
+  
+  render() {
   	return (
-    	<form>
-      	<input type="text" placeholder="github username" />
+    	<form onSubmit={this.handleSubmit}>
+      	<input type="text" 
+        	value={this.state.userName}
+          onChange={(event) => this.setState({userName : event.target.value})}
+        	placeholder="github username" />
         <button type="submit">Add card</button>
       </form>
     );
@@ -44,14 +47,24 @@ class Form extends React.Component {
 }
 
 class App extends React.Component {
+	state = {
+  	cards : []
+  }
+  
+  addNewCard = (cardInfo) => {
+  	this.setState(prevState => ({
+    	cards : prevState.cards.concat(cardInfo)
+    }));
+  };
+  
 	render() {
   	return (
     	<div>
-      	<Form />
-        <CardList cards={data}/>
+      	<Form onSubmit={this.addNewCard}/>
+        <CardList cards={this.state.cards}/>
       </div>
     )
   }
 }
 
-ReactDOM.render(<App data={}/>, mountNode);
+ReactDOM.render(<App />, mountNode);
